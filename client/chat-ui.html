@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat UI</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f5f7fa;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        #source-label {
+            font-style: italic;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-right: 10px;
+        }
+
+        #status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .connected { background-color: #2ecc71; }
+        .disconnected { background-color: #e74c3c; }
+
+        #messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 10px;
+            margin: 0;
+        }
+
+        #messages li {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message-incoming {
+            background-color: white;
+            align-self: flex-start;
+            border: 1px solid var(--border-color);
+        }
+
+        .message-outgoing {
+            background-color: var(--primary-color);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .message-info {
+            font-size: 0.7rem;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+
+        #form {
+            display: flex;
+            padding: 10px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+        }
+
+        #input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #357abd;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Chat</h1>
+            <span id="source-label"></span>
+        </div>
+        <div title="Connection status">
+            <span id="status-indicator" class="disconnected"></span>
+            <span id="status-text">Disconnected</span>
+        </div>
+    </header>
+
+    <ul id="messages"></ul>
+
+    <form id="form">
+        <input id="input" autocomplete="off" placeholder="Type a message..." /><button>Send</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source') || 'Unknown Source';
+        
+        document.getElementById('source-label').textContent = `Via: ${source}`;
+
+        const form = document.getElementById('form');
+        const input = document.getElementById('input');
+        const messages = document.getElementById('messages');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+
+        socket.on('connect', () => {
+            statusIndicator.className = 'connected';
+            statusText.textContent = 'Connected';
+        });
+
+        socket.on('disconnect', () => {
+            statusIndicator.className = 'disconnected';
+            statusText.textContent = 'Disconnected';
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value) {
+                const msg = {
+                    text: input.value,
+                    source: source,
+                    timestamp: Date.now()
+                };
+                socket.emit('chat message', msg);
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', (msg) => {
+            const item = document.createElement('li');
+            const info = document.createElement('div');
+            info.className = 'message-info';
+            info.textContent = `${msg.source} - ${new Date(msg.timestamp).toLocaleTimeString()}`;
+            
+            const content = document.createElement('div');
+            content.textContent = msg.text;
+
+            item.appendChild(info);
+            item.appendChild(content);
+
+            if (msg.source === source) {
+                item.className = 'message-outgoing';
+            } else {
+                item.className = 'message-incoming';
+            }
+
+            messages.appendChild(item);
+            messages.scrollTop = messages.scrollHeight;
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-(function() {
+(function () {
     const container = document.createElement('div');
     container.id = 'chat-widget-container';
     container.style.position = 'fixed';
@@ -12,7 +12,7 @@
     container.style.overflow = 'hidden';
 
     const iframe = document.createElement('iframe');
-    iframe.src = 'http://localhost:3000/chat-ui?source=Script+Widget';
+    iframe.src = 'http://localhost:5000/chat-ui?source=Script+Widget';
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.border = 'none';

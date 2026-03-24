@@ -25,6 +25,9 @@
                     </div>
                 </header>
                 <div id="dom-messages" style="flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column;"></div>
+                <div style="padding: 5px 10px; background: #222;">
+                    <button id="dom-stream-btn" style="width: 100%; font-size: 0.7rem; background: #e67e22; color: white; border: none; padding: 5px; border-radius: 4px; cursor: pointer;">Simulate Streaming Response</button>
+                </div>
                 <div style="padding: 10px; background: #222; border-top: 1px solid #444; display: flex;">
                     <input id="dom-input" type="text" placeholder="Type..." style="flex-grow: 1; background: #333; color: white; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; margin-right: 5px;">
                     <button id="dom-send" style="background: #4a90e2; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Send</button>
@@ -43,7 +46,10 @@
             const messages = document.getElementById('dom-messages');
             const input = document.getElementById('dom-input');
             const sendBtn = document.getElementById('dom-send');
+            const streamBtn = document.getElementById('dom-stream-btn');
             const statusInd = document.getElementById('dom-status-indicator');
+
+            let activeStreams = {};
 
             socket.on('connect', () => { statusInd.style.background = '#2ecc71'; });
             socket.on('disconnect', () => { statusInd.style.background = '#e74c3c'; });
@@ -61,6 +67,45 @@
 
             sendBtn.onclick = sendMessage;
             input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+            streamBtn.onclick = () => {
+                socket.emit('start-stream', 'This is a real-time streaming response demo triggered from the Direct DOM Injection');
+            };
+
+            socket.on('stream-chunk', (data) => {
+                let item = activeStreams[data.streamId];
+                if (!item) {
+                    item = document.createElement('div');
+                    item.style.marginBottom = '8px';
+                    item.style.padding = '5px 10px';
+                    item.style.borderRadius = '6px';
+                    item.style.maxWidth = '85%';
+                    item.style.fontSize = '0.9rem';
+                    item.style.background = '#333';
+                    item.style.color = '#eee';
+                    item.style.alignSelf = 'flex-start';
+                    item.style.border = '1px dashed #e67e22';
+
+                    item.innerHTML = `
+                        <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 2px;">${data.source} (Streaming...)</div>
+                        <div class="dom-content"></div>
+                    `;
+                    messages.appendChild(item);
+                    activeStreams[data.streamId] = item;
+                }
+                item.querySelector('.dom-content').textContent = data.text;
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            socket.on('stream-end', (data) => {
+                const item = activeStreams[data.streamId];
+                if (item) {
+                    item.style.border = 'none';
+                    const label = item.querySelector('div');
+                    label.textContent = label.textContent.replace(' (Streaming...)', '');
+                    delete activeStreams[data.streamId];
+                }
+            });
 
             socket.on('chat message', (msg) => {
                 const item = document.createElement('div');

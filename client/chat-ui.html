@@ -83,6 +83,22 @@
             margin-left: auto;
         }
 
+        .streaming {
+            border: 1px dashed var(--primary-color);
+            opacity: 0.8;
+            position: relative;
+        }
+
+        .streaming::after {
+            content: "Streaming...";
+            position: absolute;
+            top: -15px;
+            right: 0;
+            font-size: 0.6rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
         .message-info {
             font-size: 0.7rem;
             margin-bottom: 4px;
@@ -132,6 +148,10 @@
 
     <ul id="messages"></ul>
 
+    <div id="streaming-controls" style="padding: 0 10px 5px; background: white;">
+        <button type="button" id="stream-btn" style="width: 100%; font-size: 0.8rem; background: #e67e22;">Simulate Streaming Response</button>
+    </div>
+
     <form id="form">
         <input id="input" autocomplete="off" placeholder="Type a message..." /><button>Send</button>
     </form>
@@ -149,6 +169,9 @@
         const messages = document.getElementById('messages');
         const statusIndicator = document.getElementById('status-indicator');
         const statusText = document.getElementById('status-text');
+        const streamBtn = document.getElementById('stream-btn');
+
+        let activeStreams = {};
 
         socket.on('connect', () => {
             statusIndicator.className = 'connected';
@@ -170,6 +193,43 @@
                 };
                 socket.emit('chat message', msg);
                 input.value = '';
+            }
+        });
+
+        streamBtn.addEventListener('click', () => {
+            socket.emit('start-stream', 'This is a real-time streaming response demo triggered from the ' + source);
+        });
+
+        socket.on('stream-chunk', (data) => {
+            let item = activeStreams[data.streamId];
+            if (!item) {
+                item = document.createElement('li');
+                item.className = 'message-incoming streaming';
+                
+                const info = document.createElement('div');
+                info.className = 'message-info';
+                info.textContent = `${data.source} (Streaming)`;
+                
+                const content = document.createElement('div');
+                content.className = 'content';
+                
+                item.appendChild(info);
+                item.appendChild(content);
+                messages.appendChild(item);
+                activeStreams[data.streamId] = item;
+            }
+            
+            item.querySelector('.content').textContent = data.text;
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        socket.on('stream-end', (data) => {
+            const item = activeStreams[data.streamId];
+            if (item) {
+                item.classList.remove('streaming');
+                const info = item.querySelector('.message-info');
+                info.textContent = info.textContent.replace(' (Streaming)', '');
+                delete activeStreams[data.streamId];
             }
         });
 

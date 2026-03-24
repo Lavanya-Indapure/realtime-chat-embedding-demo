@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +30,7 @@
             background: white;
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
         .demo-card h2 {
@@ -96,6 +97,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Chat Embedding Methods Demo</h1>
     <p style="text-align: center;">This page demonstrates 5 different ways to embed the same Socket.IO chat service.</p>
@@ -104,18 +106,19 @@
         <!-- Method A: iframe -->
         <div class="demo-card">
             <h2>(A) iframe Embed</h2>
-            <div class="code-snippet">&lt;iframe src="http://localhost:3000/chat-ui?source=iframe"&gt;&lt;/iframe&gt;</div>
+            <div class="code-snippet">&lt;iframe src="http://localhost:5000/chat-ui?source=iframe"&gt;&lt;/iframe&gt;
+            </div>
             <div class="iframe-container">
-                <iframe src="http://localhost:3000/chat-ui?source=iframe"></iframe>
+                <iframe src="http://localhost:5000/chat-ui?source=iframe"></iframe>
             </div>
         </div>
 
         <!-- Method B: Script Widget -->
         <div class="demo-card">
             <h2>(B) Script-based Widget</h2>
-            <div class="code-snippet">&lt;script src="http://localhost:3000/widget.js"&gt;&lt;/script&gt;</div>
+            <div class="code-snippet">&lt;script src="http://localhost:5000/widget.js"&gt;&lt;/script&gt;</div>
             <p>Check the bottom-right corner of the page!</p>
-            <script src="http://localhost:3000/widget.js"></script>
+            <script src="http://localhost:5000/widget.js"></script>
         </div>
 
         <!-- Method C: JS SDK -->
@@ -126,8 +129,8 @@
                 <button onclick="ChatApp.open()">Open SDK Chat</button>
                 <button onclick="ChatApp.close()">Close SDK Chat</button>
             </div>
-            <p class="note">SDK chat will appear floating above the others.</p>
-            <script src="http://localhost:3000/sdk.js"></script>
+            <p class="note">SDK chat will appear floating on the bottom-left.</p>
+            <script src="http://localhost:5000/sdk.js"></script>
             <script>
                 ChatApp.init({ websiteId: "demo-site-123" });
             </script>
@@ -138,7 +141,7 @@
             <h2>(D) Web Component</h2>
             <div class="code-snippet">&lt;chat-widget&gt;&lt;/chat-widget&gt;</div>
             <chat-widget></chat-widget>
-            <script src="http://localhost:3000/web-component.js"></script>
+            <script src="http://localhost:5000/web-component.js"></script>
         </div>
 
         <!-- Method E: DOM Injection -->
@@ -147,7 +150,7 @@
             <div class="code-snippet">initDomChat('dom-target');</div>
             <div id="dom-target"></div>
             <p class="note">This one is styled differently (Dark Mode) to show it's internal to the host page.</p>
-            <script src="http://localhost:3000/dom-injection.js"></script>
+            <script src="http://localhost:5000/dom-injection.js"></script>
             <script>
                 window.onload = () => {
                     initDomChat('dom-target');
@@ -157,4 +160,5 @@
     </div>
 
 </body>
+
 </html>

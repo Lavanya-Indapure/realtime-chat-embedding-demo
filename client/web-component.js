@@ -13,7 +13,7 @@ class ChatWidget extends HTMLElement {
         container.style.overflow = 'hidden';
 
         const iframe = document.createElement('iframe');
-        iframe.src = 'http://localhost:3000/chat-ui?source=Web+Component';
+        iframe.src = 'http://localhost:5000/chat-ui?source=Web+Component';
         iframe.style.width = '100%';
         iframe.style.height = '100%';
         iframe.style.border = 'none';

@@ -6,31 +6,65 @@
         const chatHtml = `
             <div id="dom-chat-ui" style="
                 font-family: 'Inter', sans-serif;
-                background: #1a1a1a;
-                color: #eee;
-                border: 2px solid #4a90e2;
-                border-radius: 12px;
+                background: hsl(220, 15%, 10%);
+                color: hsl(0, 0%, 95%);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
                 display: flex;
                 flex-direction: column;
-                height: 400px;
+                height: 450px;
                 overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                position: relative;
             ">
-                <header style="background: #333; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444;">
+                <header style="
+                    background: rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(10px);
+                    padding: 14px 18px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                ">
                     <div>
-                        <h3 style="margin: 0; font-size: 1rem;">DOM Chat (Internal)</h3>
-                        <span style="font-size: 0.7rem; color: #888;">Via: Direct DOM Injection</span>
+                        <h3 style="margin: 0; font-size: 1rem; background: linear-gradient(135deg, #4a90e2, #a855f7); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-weight: 600;">Gemini Dom Widget</h3>
+                        <span style="font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em;">Direct Injection</span>
                     </div>
                     <div id="dom-status-wrapper">
-                        <span id="dom-status-indicator" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: #e74c3c;"></span>
+                        <span id="dom-status-indicator" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: #e74c3c; box-shadow: 0 0 8px #e74c3c;"></span>
                     </div>
                 </header>
-                <div id="dom-messages" style="flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column;"></div>
-                <div style="padding: 5px 10px; background: #222;">
-                    <button id="dom-stream-btn" style="width: 100%; font-size: 0.7rem; background: #e67e22; color: white; border: none; padding: 5px; border-radius: 4px; cursor: pointer;">Simulate Streaming Response</button>
-                </div>
-                <div style="padding: 10px; background: #222; border-top: 1px solid #444; display: flex;">
-                    <input id="dom-input" type="text" placeholder="Type..." style="flex-grow: 1; background: #333; color: white; border: 1px solid #444; padding: 5px 10px; border-radius: 4px; margin-right: 5px;">
-                    <button id="dom-send" style="background: #4a90e2; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Send</button>
+                <div id="dom-messages" style="
+                    flex-grow: 1;
+                    padding: 16px;
+                    overflow-y: auto;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    background: radial-gradient(circle at top right, rgba(168, 85, 247, 0.03), transparent);
+                "></div>
+                <div style="padding: 16px; background: hsl(220, 15%, 15%); border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="display: flex; gap: 8px; background: rgba(255, 255, 255, 0.05); padding: 4px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                        <input id="dom-input" type="text" placeholder="Ask Gemini..." style="
+                            flex-grow: 1;
+                            background: transparent;
+                            color: white;
+                            border: none;
+                            padding: 8px 12px;
+                            outline: none;
+                            font-size: 0.9rem;
+                        ">
+                        <button id="dom-send" style="
+                            background: #4a90e2;
+                            color: white;
+                            border: none;
+                            padding: 0 16px;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            transition: all 0.2s;
+                        ">Send</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -38,7 +72,6 @@
         target.innerHTML = chatHtml;
 
         // Initialize Socket.IO logic manually for the DOM injection
-        // This is necessary because it's not in an iframe with chat-ui.html
         const script = document.createElement('script');
         script.src = '/socket.io/socket.io.js';
         script.onload = () => {
@@ -46,21 +79,64 @@
             const messages = document.getElementById('dom-messages');
             const input = document.getElementById('dom-input');
             const sendBtn = document.getElementById('dom-send');
-            const streamBtn = document.getElementById('dom-stream-btn');
             const statusInd = document.getElementById('dom-status-indicator');
 
             let activeStreams = {};
 
-            socket.on('connect', () => { statusInd.style.background = '#2ecc71'; });
-            socket.on('disconnect', () => { statusInd.style.background = '#e74c3c'; });
+            socket.on('connect', () => { 
+                statusInd.style.background = '#2ecc71'; 
+                statusInd.style.boxShadow = '0 0 8px #2ecc71';
+            });
+            socket.on('disconnect', () => { 
+                statusInd.style.background = '#e74c3c'; 
+                statusInd.style.boxShadow = '0 0 8px #e74c3c';
+            });
+
+            function createMsg(text, isUser, isStreaming = false) {
+                const item = document.createElement('div');
+                item.style.padding = '10px 14px';
+                item.style.borderRadius = '14px';
+                item.style.maxWidth = '85%';
+                item.style.fontSize = '0.9rem';
+                item.style.lineHeight = '1.4';
+                item.style.animation = 'fadeIn 0.2s ease forwards';
+
+                if (isUser) {
+                    item.style.background = '#4a90e2';
+                    item.style.color = 'white';
+                    item.style.alignSelf = 'flex-end';
+                    item.style.borderBottomRightRadius = '4px';
+                } else {
+                    item.style.background = 'hsl(220, 15%, 20%)';
+                    item.style.color = '#eee';
+                    item.style.alignSelf = 'flex-start';
+                    item.style.borderBottomLeftRadius = '4px';
+                    item.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                    if (isStreaming) {
+                        item.style.borderStyle = 'dashed';
+                        item.style.borderColor = '#4a90e2';
+                    }
+                }
+
+                item.innerHTML = `
+                    <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 4px; text-transform: uppercase;text-align: left;">${isUser ? 'You' : 'Gemini AI'}</div>
+                    <div class="msg-content" style="text-align: left;">${text}</div>
+                `;
+                return item;
+            }
 
             function sendMessage() {
-                if (input.value) {
+                if (input.value.trim()) {
+                    const text = input.value.trim();
                     socket.emit('chat message', {
-                        text: input.value,
+                        text: text,
                         source: 'Direct DOM',
                         timestamp: Date.now()
                     });
+                    
+                    const el = createMsg(text, true);
+                    messages.appendChild(el);
+                    messages.scrollTop = messages.scrollHeight;
                     input.value = '';
                 }
             }
@@ -68,73 +144,39 @@
             sendBtn.onclick = sendMessage;
             input.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
 
-            streamBtn.onclick = () => {
-                socket.emit('start-stream', 'This is a real-time streaming response demo triggered from the Direct DOM Injection');
-            };
-
             socket.on('stream-chunk', (data) => {
                 let item = activeStreams[data.streamId];
                 if (!item) {
-                    item = document.createElement('div');
-                    item.style.marginBottom = '8px';
-                    item.style.padding = '5px 10px';
-                    item.style.borderRadius = '6px';
-                    item.style.maxWidth = '85%';
-                    item.style.fontSize = '0.9rem';
-                    item.style.background = '#333';
-                    item.style.color = '#eee';
-                    item.style.alignSelf = 'flex-start';
-                    item.style.border = '1px dashed #e67e22';
-
-                    item.innerHTML = `
-                        <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 2px;">${data.source} (Streaming...)</div>
-                        <div class="dom-content"></div>
-                    `;
+                    item = createMsg('', false, true);
                     messages.appendChild(item);
                     activeStreams[data.streamId] = item;
                 }
-                item.querySelector('.dom-content').textContent = data.text;
+                item.querySelector('.msg-content').textContent = data.text;
                 messages.scrollTop = messages.scrollHeight;
             });
 
             socket.on('stream-end', (data) => {
                 const item = activeStreams[data.streamId];
                 if (item) {
-                    item.style.border = 'none';
-                    const label = item.querySelector('div');
-                    label.textContent = label.textContent.replace(' (Streaming...)', '');
+                    item.style.borderStyle = 'solid';
                     delete activeStreams[data.streamId];
                 }
             });
 
             socket.on('chat message', (msg) => {
-                const item = document.createElement('div');
-                item.style.marginBottom = '8px';
-                item.style.padding = '5px 10px';
-                item.style.borderRadius = '6px';
-                item.style.maxWidth = '85%';
-                item.style.fontSize = '0.9rem';
-
-                if (msg.source === 'Direct DOM') {
-                    item.style.background = '#4a90e2';
-                    item.style.color = 'white';
-                    item.style.alignSelf = 'flex-end';
-                } else {
-                    item.style.background = '#333';
-                    item.style.color = '#eee';
-                    item.style.alignSelf = 'flex-start';
+                if (msg.source !== 'Direct DOM') {
+                    const item = createMsg(msg.text, false);
+                    messages.appendChild(item);
+                    messages.scrollTop = messages.scrollHeight;
                 }
-
-                item.innerHTML = `
-                    <div style="font-size: 0.6rem; opacity: 0.6; margin-bottom: 2px;">${msg.source}</div>
-                    <div>${msg.text}</div>
-                `;
-
-                messages.appendChild(item);
-                messages.scrollTop = messages.scrollHeight;
             });
         };
         document.head.appendChild(script);
+
+        // Add fade-in animation
+        const style = document.createElement('style');
+        style.textContent = '@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }';
+        document.head.appendChild(style);
     }
 
     window.initDomChat = injectChat;
